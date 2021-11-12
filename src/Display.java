@@ -1,6 +1,8 @@
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.geom.Path2D;
 
 import javax.swing.JPanel;
@@ -15,12 +17,14 @@ public class Display extends JPanel {
 
 	protected void paintComponent(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g; 
+		g2d.setStroke(new BasicStroke(5));
 		g2d.setColor(Color.white);
 		g2d.fillRect(0, 0, m.frame.getContentPane().getWidth(), m.frame.getContentPane().getWidth());
 		
-		g2d.setColor(Color.DARK_GRAY);
-		Path2D.Double polygon = new Path2D.Double();
+		Path2D.Double polygon;
 		try {
+			g2d.setColor(Color.DARK_GRAY);
+			polygon = new Path2D.Double();
 			polygon.moveTo(m.polygon.get(0)[0], m.polygon.get(0)[1]);
 			for(int i = 1; i < m.polygon.size(); i++) {
 				polygon.lineTo(m.polygon.get(i)[0], m.polygon.get(i)[1]);
@@ -42,6 +46,21 @@ public class Display extends JPanel {
 			
 			g2d.setColor(Color.GREEN);
 			g2d.fillOval((int) Math.round(m.centroid[0]) - 5, (int) Math.round(m.centroid[1]) - 5, 10, 10);
+			
+			for(int i = 0; i < m.dividedShape.size(); i++) {
+				g2d.setColor(Color.ORANGE);
+				//g2d.setColor(Color.RED);
+				//for(int i = 0; i < m.dividedShape.size())
+				polygon = new Path2D.Double();
+				polygon.moveTo(m.dividedShape.get(i).get(0)[0], m.dividedShape.get(i).get(0)[1]);
+				for(int b = 1; b < m.dividedShape.get(i).size(); b++) {
+					polygon.lineTo(m.dividedShape.get(i).get(b)[0], m.dividedShape.get(i).get(b)[1]);
+				
+				}
+				polygon.closePath();
+				g2d.draw(polygon);
+			}
+			
 		}catch(Exception e) {}		
 		
 	}
