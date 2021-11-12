@@ -12,15 +12,23 @@ public class Main implements ActionListener {
 	Timer timer;
 	UserInput ui;
 	boolean retry;
+	
+	
+	ArrayList<Double[]> polygon;
+	Double[] center;
+	Double[] centroid;
+	
+	//Points of the line through the center
 	Double[] point1;
 	Double[] point2;
-	ArrayList<Double[]> shape;
-	Double[] center;
-	//Intersection points of the line, and the shape
+	
+	//Intersection points of the line, and the polygon
 	ArrayList<Double[]> points;
-	//The indexes of each of these points
+	//The indexes of the lines these points fall on
 	ArrayList<Integer[]> pointIndexes;
-	ArrayList<ArrayList<Double[]>> dividedShapes;
+		
+	ArrayList<ArrayList<Double[]>> dividedShape;
+	ArrayList<ArrayList<Double[]>> dividedShape2;
 
 	public Main() {
 		timer = new Timer(10, this);
@@ -47,13 +55,21 @@ public class Main implements ActionListener {
 	public void actionPerformed(ActionEvent arg0) {
 		
 	}
+	
+	public void generateElements(){
+		calculateCenter();
+		calculateNewPoints(Math.random() * Math.PI * 2);
+		centroid = findCentroid(polygon, calculateArea(polygon));
+		sortPoints();
+		//divideShape();
+	}
 
 	public void generateShape() {
 		int numVerts = 3;
 		int attempts;
 		boolean addVert = true;
 		boolean intersects;
-		shape = new ArrayList<Double[]>();
+		polygon = new ArrayList<Double[]>();
 		Double[] vert = null;
 		retry = false;
 
@@ -65,8 +81,8 @@ public class Main implements ActionListener {
 		}
 
 		for (int i = 0; i < 3; i++) {
-			vert = new Double[] { Math.random() * 500, Math.random() * 500, (double) i };
-			shape.add(vert);
+			vert = new Double[] { Math.random() * 500, Math.random() * 500};
+			polygon.add(vert);
 		}
 
 		for (int i = 3; i <= numVerts; i++) {
@@ -74,12 +90,12 @@ public class Main implements ActionListener {
 			do {
 				attempts++;
 				intersects = false;
-				vert = new Double[] { Math.random() * 500, Math.random() * 500, (double) i };
+				vert = new Double[] {Math.random() * 500, Math.random() * 500};
 
 				// Checking for a collision between the line from the last point to the current
 				// point
-				for (int b = 1; b < shape.size(); b++) {
-					if (findIntersection(shape.get(b - 1), shape.get(b), shape.get(shape.size() - 1), vert) != null) {
+				for (int b = 1; b < polygon.size(); b++) {
+					if (findIntersection(polygon.get(b - 1), polygon.get(b), polygon.get(polygon.size() - 1), vert) != null) {
 						intersects = true;
 					}
 				}
@@ -89,8 +105,8 @@ public class Main implements ActionListener {
 				 * Therefore, we also have to check if this line collides.
 				 */
 				if (i == numVerts) {
-					for (int b = 1; b < shape.size(); b++) {
-						if (findIntersection(shape.get(b - 1), shape.get(b), vert, shape.get(0)) != null) {
+					for (int b = 1; b < polygon.size(); b++) {
+						if (findIntersection(polygon.get(b - 1), polygon.get(b), vert, polygon.get(0)) != null) {
 							intersects = true;
 						}
 					}
@@ -102,7 +118,7 @@ public class Main implements ActionListener {
 				}
 
 			} while (intersects);
-			shape.add(vert);
+			polygon.add(vert);
 		}
 
 	}
@@ -110,13 +126,49 @@ public class Main implements ActionListener {
 	public void calculateCenter() {
 		center = new Double[] {0.0, 0.0};
 		
-		for(int i = 0; i < shape.size(); i++) {
-			center[0] += shape.get(i)[0];
-			center[1] += shape.get(i)[1];
+		for(int i = 0; i < polygon.size(); i++) {
+			center[0] += polygon.get(i)[0];
+			center[1] += polygon.get(i)[1];
 		}
 		
-		center[0] /= shape.size();
-		center[1] /= shape.size();
+		center[0] /= polygon.size();
+		center[1] /= polygon.size();
+	}
+	
+	/*
+	 * This is one of few functions with a return type, because we will have to use it on the sub-polygons too, 
+	 * and not just the main polygon.
+	 */
+	public double calculateArea(ArrayList<Double[]> polygon) {
+		double area = 0;
+		
+		//The function assumes that the last point loops around to the first.
+		polygon.add(polygon.get(0));
+		
+		for(int i = 0; i < polygon.size() - 1; i++) {
+			area += polygon.get(i)[0] * polygon.get(i + 1)[1] - polygon.get(i + 1)[0] * polygon.get(i)[1];
+		}
+		
+		area /= 2;
+		
+		return area;
+	}
+	
+	public Double[] findCentroid(ArrayList<Double[]> polygon, double area) {
+		Double[] centroid = new Double[] {0.0, 0.0};
+		
+		//The function assumes that the last point loops around to the first.
+		polygon.add(polygon.get(0));
+		
+		for(int i = 0; i < polygon.size() - 1; i++) {
+			centroid[0] += (polygon.get(i)[0] + polygon.get(i + 1)[0]) * (polygon.get(i)[0] * polygon.get(i + 1)[1] - polygon.get(i + 1)[0] * polygon.get(i)[1]);
+			centroid[1] += (polygon.get(i)[1] + polygon.get(i + 1)[1]) * (polygon.get(i)[0] * polygon.get(i + 1)[1] - polygon.get(i + 1)[0] * polygon.get(i)[1]);
+		}
+		
+		centroid[0] /= (6 * area);
+		centroid[1] /= (6 * area);
+		
+		return centroid;
 	}
 	
 	public void calculateNewPoints(double angle){
@@ -128,25 +180,27 @@ public class Main implements ActionListener {
 		point1 = new Double[] {center[0] + maxDistance * Math.cos(angle), center[1] + maxDistance * Math.sin(angle)};
 		point2 = new Double[] {center[0] - maxDistance * Math.cos(angle), center[1] - maxDistance * Math.sin(angle)};
 		
-		for(int i = 1; i < shape.size(); i++) {
-			intersection = findIntersection(shape.get(i-1), shape.get(i), point1, point2);
+		for(int i = 1; i < polygon.size(); i++) {
+			intersection = findIntersection(polygon.get(i-1), polygon.get(i), point1, point2);
 			if(intersection != null) {
 				points.add(intersection);
 				pointIndexes.add(new Integer[] {i-1, i});
 			}
 		}
 		
-		intersection = findIntersection(shape.get(shape.size() - 1), shape.get(0), point1, point2);
+		intersection = findIntersection(polygon.get(polygon.size() - 1), polygon.get(0), point1, point2);
 		if(intersection != null) {
 			points.add(intersection);
-			pointIndexes.add(new Integer[] {shape.size(), 0});
+			pointIndexes.add(new Integer[] {polygon.size(), 0});
 		}
 	}
 	
+	//TODO Sort pointIndexes
 	public void sortPoints() {
 		for (int i = 1; i < points.size(); ++i) {
 			//The key is the double we are currently sorting.
 			Double[] key = points.get(i);
+			Integer[] key2 = pointIndexes.get(i);
 			
 			//The index of the variable we compare our key to.
 			int a = i - 1;
@@ -158,6 +212,7 @@ public class Main implements ActionListener {
 			while (a >= 0 && points.get(a)[0] < key[0]) {
 				//Starting at the element to the left of double we are sorting, we move the element to the right
 				points.set(a + 1, points.get(a));
+				pointIndexes.set(a + 1, pointIndexes.get(a));
 				a--;
 			}
 			
@@ -169,15 +224,80 @@ public class Main implements ActionListener {
 			 * element at a + 1, because we already moved it to the right in the previous iteration of the while loop.
 			 */
 			points.set(a + 1, key);
+			pointIndexes.set(a + 1, key2);
 		}
 	}
 	
 	public void divideShape() {
+		ArrayList<Double[]> unusedPoints = (ArrayList<Double[]>) points.clone();
+		ArrayList<Integer> unusedPointIndexes = new ArrayList<Integer>();
+		ArrayList<Double[]> newPolygon = (ArrayList<Double[]>) polygon.clone();
+		dividedShape = new ArrayList<ArrayList<Double[]>>();
+		ArrayList<Double[]> currentPolygon = new ArrayList<Double[]>();
+		boolean intersection;
+		int initPointIndex = 0;
+		int shapeIndex = 0;
+		//Index of the point we are on
+		int index = 0;
+		//How much to increase the index of each point when we insert the intersection points
+		int indexIncrease = 0;
+		//If you should use the first or second option
+		boolean option1;
 		
-	}
-	
-	public void calculateArea() {
+		//Adding the intersection points to the new Polygon
+		for(int i = 0; i < points.size(); i++) {
+			newPolygon.add(pointIndexes.get(i)[0] + indexIncrease, points.get(i));
+			//The point being added is AFTER the first value in its corresponding point index, so we have to add 1.
+			unusedPointIndexes.add(pointIndexes.get(i)[0] + indexIncrease + 1);
+			//Each time you add a point, all the points after that will have their index increased.
+			indexIncrease++;
+		}
+		//TODO update the non-intersection point indexes.
+		//TODO add intersection point for the last line.
 		
+		//Loops shapes
+		while(true) {
+			option1 = true;
+			//Loops points
+			while(true) {
+				intersection = false;
+				//Find if the current point is an intersection
+				for(int i = 0; i < unusedPointIndexes.size(); i++) {
+					if(index == unusedPointIndexes.get(i)) {
+						intersection = true;
+					}
+				}
+				
+				if(intersection) {
+					//Removes point from unusedPoints
+					unusedPoints.remove(index);
+					unusedPointIndexes.remove(index);
+					
+					if(option1) {
+						//1. move along shape
+						index++;
+					}else {
+						//2. move left on line
+					}
+					option1 = !option1;
+				}else {
+					//Move along shape
+					index++;
+				}
+				
+				if(/*initial point*/true) {
+					break;
+				}else {
+					dividedShape.add(currentPolygon);
+				}
+				
+				//index++; (Unsure of why I have this here)
+			}
+			
+			shapeIndex++;
+			//remove points from pointIndexes
+		}
+
 	}
 
 	public Double[] findIntersection(Double[] a1, Double[] a2, Double[] b1, Double[] b2) {

@@ -21,9 +21,9 @@ public class Display extends JPanel {
 		g2d.setColor(Color.DARK_GRAY);
 		Path2D.Double polygon = new Path2D.Double();
 		try {
-			polygon.moveTo(m.shape.get(0)[0], m.shape.get(0)[1]);
-			for(int i = 1; i < m.shape.size(); i++) {
-				polygon.lineTo(m.shape.get(i)[0], m.shape.get(i)[1]);
+			polygon.moveTo(m.polygon.get(0)[0], m.polygon.get(0)[1]);
+			for(int i = 1; i < m.polygon.size(); i++) {
+				polygon.lineTo(m.polygon.get(i)[0], m.polygon.get(i)[1]);
 			
 			}
 			polygon.closePath();
@@ -36,6 +36,12 @@ public class Display extends JPanel {
 			for(int i = 0; i < m.points.size(); i++) {
 				g2d.fillOval((int) Math.round(m.points.get(i)[0]) - 5, (int) Math.round(m.points.get(i)[1]) - 5, 10, 10);
 			}
+			
+			g2d.setColor(Color.MAGENTA);
+			g2d.fillOval((int) Math.round(m.center[0] - 5), (int) Math.round(m.center[1] - 5), 10, 10);
+			
+			g2d.setColor(Color.GREEN);
+			g2d.fillOval((int) Math.round(m.centroid[0]) - 5, (int) Math.round(m.centroid[1]) - 5, 10, 10);
 		}catch(Exception e) {}		
 		
 	}

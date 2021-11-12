@@ -29,9 +29,7 @@ public class UserInput implements KeyListener, MouseListener {
 			m.generateShape();
 		}while(m.retry);
 		
-		m.calculateCenter();
-		m.calculateNewPoints(Math.random() * Math.PI * 2);
-
+		m.generateElements();
 		m.d.repaint();
 		
 	}
