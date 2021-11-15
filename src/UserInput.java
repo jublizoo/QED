@@ -26,12 +26,12 @@ public class UserInput implements KeyListener, MouseListener {
 	@Override
 	public void keyTyped(KeyEvent arg0) {
 		do {
-			m.generateShape();
+			m.generateShape(); 
 		}while(m.retry);
 		
 		m.generateElements();
 		m.d.repaint();
-		
+		System.out.println();
 	}
 
 	@Override

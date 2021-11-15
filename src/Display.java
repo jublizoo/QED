@@ -32,7 +32,7 @@ public class Display extends JPanel {
 			}
 			polygon.closePath();
 			g2d.fill(polygon);
-			
+						
 			g2d.setColor(Color.blue);
 			g2d.drawLine((int) Math.round(m.point1[0]), (int) Math.round(m.point1[1]), (int) Math.round(m.point2[0]), (int) Math.round(m.point2[1]));
 			
@@ -47,14 +47,24 @@ public class Display extends JPanel {
 			g2d.setColor(Color.GREEN);
 			g2d.fillOval((int) Math.round(m.centroid[0]) - 5, (int) Math.round(m.centroid[1]) - 5, 10, 10);
 			
+			g2d.setColor(Color.orange);
 			for(int i = 0; i < m.dividedShape.size(); i++) {
-				g2d.setColor(Color.ORANGE);
-				//g2d.setColor(Color.RED);
-				//for(int i = 0; i < m.dividedShape.size())
 				polygon = new Path2D.Double();
 				polygon.moveTo(m.dividedShape.get(i).get(0)[0], m.dividedShape.get(i).get(0)[1]);
 				for(int b = 1; b < m.dividedShape.get(i).size(); b++) {
 					polygon.lineTo(m.dividedShape.get(i).get(b)[0], m.dividedShape.get(i).get(b)[1]);
+				
+				}
+				polygon.closePath();
+				g2d.draw(polygon);
+			}
+			
+			g2d.setColor(Color.CYAN);
+			for(int i = 0; i < m.dividedShape2.size(); i++) {
+				polygon = new Path2D.Double();
+				polygon.moveTo(m.dividedShape2.get(i).get(0)[0], m.dividedShape2.get(i).get(0)[1]);
+				for(int b = 1; b < m.dividedShape2.get(i).size(); b++) {
+					polygon.lineTo(m.dividedShape2.get(i).get(b)[0], m.dividedShape2.get(i).get(b)[1]);
 				
 				}
 				polygon.closePath();

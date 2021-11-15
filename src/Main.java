@@ -36,7 +36,7 @@ public class Main implements ActionListener {
 		d = new Display(this);
 		ui = new UserInput(this);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(1000, 1100);
+		frame.setSize(1000, 1000);
 		frame.setVisible(true);
 		frame.add(d);
 		frame.addKeyListener(ui);
@@ -48,7 +48,7 @@ public class Main implements ActionListener {
 	}
 
 	public static void main(String[] args) {
-		Main m = new Main();
+		new Main();
 	}
 
 	@Override
@@ -60,8 +60,8 @@ public class Main implements ActionListener {
 		calculateCenter();
 		calculateNewPoints(Math.random() * Math.PI * 2);
 		centroid = findCentroid(polygon, calculateArea(polygon));
-		sortPoints();
 		divideShape();
+		divideShape2();
 	}
 
 	public void generateShape() {
@@ -81,7 +81,7 @@ public class Main implements ActionListener {
 		}
 
 		for (int i = 0; i < 3; i++) {
-			vert = new Double[] { Math.random() * 1000, Math.random() * 1000};
+			vert = new Double[] { Math.random() * 900, Math.random() * 900};
 			polygon.add(vert);
 		}
 
@@ -90,7 +90,7 @@ public class Main implements ActionListener {
 			do {
 				attempts++;
 				intersects = false;
-				vert = new Double[] {Math.random() * 1000, Math.random() * 1000};
+				vert = new Double[] {Math.random() * 900, Math.random() * 900};
 
 				// Checking for a collision between the line from the last point to the current
 				// point
@@ -191,16 +191,17 @@ public class Main implements ActionListener {
 		intersection = findIntersection(polygon.get(polygon.size() - 1), polygon.get(0), point1, point2);
 		if(intersection != null) {
 			points.add(intersection);
-			pointIndexes.add(new Integer[] {polygon.size(), 0});
+			pointIndexes.add(new Integer[] {polygon.size() - 1, 0});
 		}
 	}
 	
 	//TODO Sort pointIndexes
-	public void sortPoints() {
-		for (int i = 1; i < points.size(); ++i) {
+	public TwoList sortPoints(ArrayList<Double[]> one, ArrayList<Integer> two) {
+		
+		for (int i = 1; i < one.size(); ++i) {
 			//The key is the double we are currently sorting.
-			Double[] key = points.get(i);
-			Integer[] key2 = pointIndexes.get(i);
+			Double[] key = one.get(i);
+			Integer key2 = two.get(i);
 			
 			//The index of the variable we compare our key to.
 			int a = i - 1;
@@ -209,10 +210,10 @@ public class Main implements ActionListener {
 			 * Here, we move backwards, starting from the index of the double we are sorting. We stop if the index is less
 			 * than 0, or if the double that we are checking is less than our key. 			 
 			 */
-			while (a >= 0 && points.get(a)[0] < key[0]) {
+			while (a >= 0 && one.get(a)[0] < key[0]) {
 				//Starting at the element to the left of double we are sorting, we move the element to the right
-				points.set(a + 1, points.get(a));
-				pointIndexes.set(a + 1, pointIndexes.get(a));
+				one.set(a + 1, one.get(a));
+				two.set(a + 1, two.get(a));
 				a--;
 			}
 			
@@ -223,16 +224,23 @@ public class Main implements ActionListener {
 			 * right of the first smaller element, which will be a + 1. We do not have to worry about overwriting the 
 			 * element at a + 1, because we already moved it to the right in the previous iteration of the while loop.
 			 */
-			points.set(a + 1, key);
-			pointIndexes.set(a + 1, key2);
+			one.set(a + 1, key);
+			two.set(a + 1, key2);
 		}
+		
+		TwoList sortedLists = new TwoList(one, two);
+		
+		return sortedLists;
+		
 	}
 	
+	//TODO UNUSED POINTS NOT SORTED????
 	public void divideShape() {
-		ArrayList<Double[]> unusedPoints = (ArrayList<Double[]>) points.clone();
+		ArrayList<Double[]> unusedPoints = new ArrayList<Double[]>();
 		ArrayList<Integer> unusedPointIndexes = new ArrayList<Integer>();
 		//We need this to keep track of the updated indexes (within the polygon), even if they have been removed
 		ArrayList<Integer> newPointIndexes;
+		//The polygon with the intersections inserted
 		ArrayList<Double[]> newPolygon = (ArrayList<Double[]>) polygon.clone();
 		dividedShape = new ArrayList<ArrayList<Double[]>>();
 		ArrayList<Double[]> currentPolygon;
@@ -252,34 +260,34 @@ public class Main implements ActionListener {
 		 * the polygon, because when we increase indexIncrease, it should only affect the points after the 
 		 * current point in the polygon. If we do it in the order that they occur in the pointIndexes list, 
 		 * it may cycle backwards in the order points occur in the polygon, so adding indexIncrease would give
-		 * the wrong index.
+		 * the wrong index. We use the first index + 1, instead of just the second points, because the last intersection
+		 * point should occur at the end of the list, and not the beginning (May not matter).
 		 */
-		for(int i = 0; i < newPolygon.size(); i++) {
+		for(int i = 0; i < polygon.size(); i++) {
 			for(int b = 0; b < pointIndexes.size(); b++) {
 				if(i == pointIndexes.get(b)[0]) {
 					//We want to add it after the first point (otherwise it wouldn't be on the line), so we add 1
 					newPolygon.add(pointIndexes.get(b)[0] + indexIncrease + 1, points.get(b));
 					unusedPointIndexes.add(pointIndexes.get(b)[0] + indexIncrease + 1);
+					unusedPoints.add(points.get(b));
 					//Each time you add a point, all the points after that will have their index increased.
 					indexIncrease++;
 				}
 			}
 		}
 		
+		unusedPointIndexes = sortPoints(unusedPoints, unusedPointIndexes).two;	
 		newPointIndexes = (ArrayList<Integer>) unusedPointIndexes.clone();
-		
-		//Note that these comments may not be problems, keeping them until I decide if they are.
-		//TODO update the non-intersection point indexes.
-		//TODO add intersection point for the last line.
-		
+				
 		//Loops shapes
 		while(true) {
-			//Starting at the leftmost point
+			//Starting at the rightmost point
 			if(unusedPointIndexes.size() > 0) {
+				//Remove below line if sort method does not work.
 				index = unusedPointIndexes.get(0);
 				initPointIndex = index;
 			}else {
-				//If there are no more leftmost points, we have exhausted all shapes on this side.
+				//If there are no more leftmost points, we have exhausted all shapes on this side.			
 				break;
 			}
 			
@@ -303,21 +311,19 @@ public class Main implements ActionListener {
 				if(intersection) {
 					if(option1) {
 						//1. move along shape
-						index++;
+						if(index < newPolygon.size() - 1) {
+							index++;
+						}else {
+							//Loops around
+							index = 0;
+						}
 					}else {
-						//2. move left on line
 						/*
+						 * 2. move left on line
 						 * If we move left to the initial point, it will have already been removed from
 						 * unusedPointIndexes. Therefore, we will get an error if we try to set the index to
 						 * that. Instead, we use newPointIndexes, to search for already removed points.
 						 */
-						/*
-						for(int i = 0; i < unusedPointIndexes.size(); i++) {
-							if(unusedPointIndexes.get(i) == index) {
-								index = unusedPointIndexes.get(i - 1);
-							}
-						}
-						*/
 						for(int i = 0; i < newPointIndexes.size(); i++) {
 							if(newPointIndexes.get(i) == index) {
 								index = newPointIndexes.get(i - 1);
@@ -328,20 +334,23 @@ public class Main implements ActionListener {
 					option1 = !option1;
 					
 					/*
-					 * Removes point from unusedPoints. We cannot use the index, because the index of the value
+					 * Removes point from unusedPointIndexes. We cannot use the index, because the index of the value
 					 * is what we need for the remove function, so we need the index of the index, which will
 					 * almost always be different from the index.
 					 */
-					unusedPoints.remove(removeIndex);
 					unusedPointIndexes.remove(removeIndex);
 				}else {
 					//Move along shape
-					index++;
+					if(index < newPolygon.size() - 1) {
+						index++;
+					}else {
+						//Loops around
+						index = 0;
+					}
 				}
 				
 				//Checks if it's the initial point
 				if(index == initPointIndex) {
-					dividedShape.add(currentPolygon);
 					break;
 				}else {
 					/*
@@ -355,6 +364,143 @@ public class Main implements ActionListener {
 					 */
 				}
 			}
+			
+			dividedShape.add(currentPolygon);
+		}
+
+	}
+	
+	public void divideShape2() {
+		ArrayList<Double[]> unusedPoints = new ArrayList<Double[]>();
+		ArrayList<Integer> unusedPointIndexes = new ArrayList<Integer>();
+		//We need this to keep track of the updated indexes (within the polygon), even if they have been removed
+		ArrayList<Integer> newPointIndexes;
+		//The polygon with the intersections inserted
+		ArrayList<Double[]> newPolygon = (ArrayList<Double[]>) polygon.clone();
+		dividedShape2 = new ArrayList<ArrayList<Double[]>>();
+		ArrayList<Double[]> currentPolygon;
+		boolean intersection;
+		int initPointIndex = 0;
+		//Index of the value we remove from unusedPoints
+		int removeIndex = 0;
+		//Index of the point we are on
+		int index = 0;
+		//How much to increase the index of each point when we insert the intersection points
+		int indexIncrease = 0;
+		//If you should use the first or second option
+		boolean option1;
+		
+		/*
+		 * Adding the intersection points to the new Polygon. We have to do it in the order the points occur in
+		 * the polygon, because when we increase indexIncrease, it should only affect the points after the 
+		 * current point in the polygon. If we do it in the order that they occur in the pointIndexes list, 
+		 * it may cycle backwards in the order points occur in the polygon, so adding indexIncrease would give
+		 * the wrong index. We use the first index + 1, instead of just the second points, because the last intersection
+		 * point should occur at the end of the list, and not the beginning (May not matter).
+		 */
+		for(int i = 0; i < polygon.size(); i++) {
+			for(int b = 0; b < pointIndexes.size(); b++) {
+				if(i == pointIndexes.get(b)[0]) {
+					//We want to add it after the first point (otherwise it wouldn't be on the line), so we add 1
+					newPolygon.add(pointIndexes.get(b)[0] + indexIncrease + 1, points.get(b));
+					unusedPointIndexes.add(pointIndexes.get(b)[0] + indexIncrease + 1);
+					unusedPoints.add(points.get(b));
+					//Each time you add a point, all the points after that will have their index increased.
+					indexIncrease++;
+				}
+			}
+		}
+		
+		unusedPointIndexes = sortPoints(unusedPoints, unusedPointIndexes).two;	
+		newPointIndexes = (ArrayList<Integer>) unusedPointIndexes.clone();
+				
+		//Loops shapes
+		while(true) {
+			//Starting at the rightmost point
+			if(unusedPointIndexes.size() > 0) {
+				//Remove below line if sort method does not work.
+				index = unusedPointIndexes.get(0);
+				initPointIndex = index;
+			}else {
+				//If there are no more leftmost points, we have exhausted all shapes on this side.			
+				break;
+			}
+			
+			option1 = true;
+			
+			currentPolygon = new ArrayList<Double[]>();
+			
+			//Loops points
+			while(true) {
+				currentPolygon.add(newPolygon.get(index));
+				
+				intersection = false;
+				//Find if the current point is an intersection
+				for(int i = 0; i < unusedPointIndexes.size(); i++) {
+					if(index == unusedPointIndexes.get(i)) {
+						intersection = true;
+						removeIndex = i;
+					}
+				}
+				
+				if(intersection) {
+					if(option1) {
+						//1. move along shape
+						if(index > 0) {
+							index--;
+						}else {
+							//Loops around
+							index = newPolygon.size() - 1;
+						}
+					}else {
+						/*
+						 * 2. move left on line
+						 * If we move left to the initial point, it will have already been removed from
+						 * unusedPointIndexes. Therefore, we will get an error if we try to set the index to
+						 * that. Instead, we use newPointIndexes, to search for already removed points.
+						 */
+						for(int i = 0; i < newPointIndexes.size(); i++) {
+							if(newPointIndexes.get(i) == index) {
+								index = newPointIndexes.get(i - 1);
+							}
+						}
+					}
+					
+					option1 = !option1;
+					
+					/*
+					 * Removes point from unusedPointIndexes. We cannot use the index, because the index of the value
+					 * is what we need for the remove function, so we need the index of the index, which will
+					 * almost always be different from the index.
+					 */
+					unusedPointIndexes.remove(removeIndex);
+				}else {
+					//Move along shape
+					if(index > 0) {
+						index--;
+					}else {
+						//Loops around
+						index = newPolygon.size() - 1;
+					}
+				}
+				
+				//Checks if it's the initial point
+				if(index == initPointIndex) {
+					break;
+				}else {
+					/*
+					 * We add each point before we change the index. This means that if we reach the final 
+					 * (initial) point, it has not been added, because we check if it is the final point after
+					 * we change the index, and we will break before it has the chance to loop, and add the 
+					 * point with the current index.
+					 * By the same logic, we do not have to worry about ending the loop on the ACTUAL initial 
+					 * point (the first occurence), because we change the index before checking if it is the 
+					 * final (initial) point.
+					 */
+				}
+			}
+			
+			dividedShape2.add(currentPolygon);
 		}
 
 	}
