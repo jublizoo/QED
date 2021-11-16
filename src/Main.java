@@ -13,9 +13,10 @@ public class Main implements ActionListener {
 	UserInput ui;
 	boolean retry;
 	
+	double angle = 0;
 	
 	ArrayList<Double[]> polygon;
-	Double[] center;
+	Double[] vertCenter;
 	Double[] centroid;
 	
 	//Points of the line through the center
@@ -31,6 +32,8 @@ public class Main implements ActionListener {
 	ArrayList<ArrayList<Double[]>> dividedShape2;
 
 	public Main() {
+		System.out.println(findIntersection(new Double[] {-100.0, 0.0},new Double[] {100.0, 0.0},new Double[] {1.0, 100.0},new Double[] {0.0,-100.0}));
+
 		timer = new Timer(10, this);
 		frame = new JFrame();
 		d = new Display(this);
@@ -41,9 +44,6 @@ public class Main implements ActionListener {
 		frame.add(d);
 		frame.addKeyListener(ui);
 		frame.addMouseListener(ui);
-		// Double[] x = findIntersection(new Double[] {1.0, 1.0}, new Double[] {4.0,
-		// 4.0}, new Double[] {1.0, 3.0}, new Double[] {2.5, 0.0});
-		// System.out.println(x[0] + ", " + x[1]);
 		timer.start();
 	}
 
@@ -53,13 +53,28 @@ public class Main implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		
+		if(polygon != null ) {
+			calculateNewPoints(angle);
+			divideShape();
+			divideShape2();
+			
+			if(angle % (2 * Math.PI) > Math.PI / 2 && angle % (2 * Math.PI) < 3 * Math.PI / 2) {	
+				ArrayList<ArrayList<Double[]>> temp = (ArrayList<ArrayList<Double[]>>) dividedShape.clone();
+				dividedShape = (ArrayList<ArrayList<Double[]>>) dividedShape2.clone();
+				dividedShape2 = temp;
+				System.out.println(angle);
+			}
+			
+			d.repaint();
+			
+			angle += (Math.PI / 180);
+		}		
 	}
 	
 	public void generateElements(){
-		calculateCenter();
-		calculateNewPoints(Math.random() * Math.PI * 2);
 		centroid = findCentroid(polygon, calculateArea(polygon));
+		calculateCenter();
+		calculateNewPoints(angle);
 		divideShape();
 		divideShape2();
 	}
@@ -124,15 +139,15 @@ public class Main implements ActionListener {
 	}
 	
 	public void calculateCenter() {
-		center = new Double[] {0.0, 0.0};
+		vertCenter = new Double[] {0.0, 0.0};
 		
 		for(int i = 0; i < polygon.size(); i++) {
-			center[0] += polygon.get(i)[0];
-			center[1] += polygon.get(i)[1];
+			vertCenter[0] += polygon.get(i)[0];
+			vertCenter[1] += polygon.get(i)[1];
 		}
 		
-		center[0] /= polygon.size();
-		center[1] /= polygon.size();
+		vertCenter[0] /= polygon.size();
+		vertCenter[1] /= polygon.size();
 	}
 	
 	/*
@@ -172,11 +187,13 @@ public class Main implements ActionListener {
 	}
 	
 	public void calculateNewPoints(double angle){
+		Double[] center = centroid;
 		points = new ArrayList<Double[]>();
 		//The maximum distance such that both point will fall outside the polygon bounding box
 		double maxDistance = Math.sqrt(2 * Math.pow(500, 2));
 		pointIndexes = new ArrayList<Integer[]>();
 		Double[] intersection;
+
 		point1 = new Double[] {center[0] + maxDistance * Math.cos(angle), center[1] + maxDistance * Math.sin(angle)};
 		point2 = new Double[] {center[0] - maxDistance * Math.cos(angle), center[1] - maxDistance * Math.sin(angle)};
 		
@@ -563,10 +580,10 @@ public class Main implements ActionListener {
 		maxB = new Double[] { Math.max(b1[0], b2[0]), Math.max(b1[1], b2[1]) };
 		minB = new Double[] { Math.min(b1[0], b2[0]), Math.min(b1[1], b2[1]) };
 		// Checking if the point is within both of the segments
-		if (intersection[0] < maxA[0] && intersection[0] > minA[0] && intersection[1] < maxA[1]
-				&& intersection[1] > minA[1]) {
-			if (intersection[0] < maxB[0] && intersection[0] > minB[0] && intersection[1] < maxB[1]
-					&& intersection[1] > minB[1]) {
+		if (intersection[0] <= maxA[0] && intersection[0] >= minA[0] && intersection[1] <= maxA[1]
+				&& intersection[1] >= minA[1]) {
+			if (intersection[0] <= maxB[0] && intersection[0] >= minB[0] && intersection[1] <= maxB[1]
+					&& intersection[1] >= minB[1]) {
 				return intersection;
 			}
 		}

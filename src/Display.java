@@ -66,7 +66,7 @@ public class Display extends JPanel {
 			}
 			
 			g2d.setColor(Color.MAGENTA);
-			g2d.fillOval((int) Math.round(m.center[0] - 5), (int) Math.round(m.center[1] - 5), 10, 10);
+			g2d.fillOval((int) Math.round(m.vertCenter[0] - 5), (int) Math.round(m.vertCenter[1] - 5), 10, 10);
 			
 			g2d.setColor(Color.GREEN);
 			g2d.fillOval((int) Math.round(m.centroid[0]) - 5, (int) Math.round(m.centroid[1]) - 5, 10, 10);
