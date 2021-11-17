@@ -13,7 +13,7 @@ public class Main implements ActionListener {
 	UserInput ui;
 	boolean retry;
 	
-	double angle = 0;
+	double angle = Math.PI / 180;
 	
 	ArrayList<Double[]> polygon;
 	Double[] vertCenter;
@@ -30,10 +30,14 @@ public class Main implements ActionListener {
 		
 	ArrayList<ArrayList<Double[]>> dividedShape;
 	ArrayList<ArrayList<Double[]>> dividedShape2;
-
+	
+	double area1;
+	double area2;
+	
+	ArrayList<ArrayList<Double>> allRatios = new ArrayList<ArrayList<Double>>();
+	ArrayList<Double> averageRatios = new ArrayList<Double>();
+	
 	public Main() {
-		System.out.println(findIntersection(new Double[] {-100.0, 0.0},new Double[] {100.0, 0.0},new Double[] {1.0, 100.0},new Double[] {0.0,-100.0}));
-
 		timer = new Timer(10, this);
 		frame = new JFrame();
 		d = new Display(this);
@@ -45,19 +49,49 @@ public class Main implements ActionListener {
 		frame.addKeyListener(ui);
 		frame.addMouseListener(ui);
 		timer.start();
+		/*
+		for(int i = 0; i < 100; i++) {
+			do {
+				generateShape(); 
+			}while(retry);
+			
+			generateElements();
+		}
+		
+		for(int i = 0; i < allRatios.get(0).size(); i++) {
+			int divideNum = 0;
+			double total = 0;
+			for(int a = 0; a < allRatios.size(); a++) {
+				if((!Double.isNaN(allRatios.get(a).get(i))) && allRatios.get(a).get(i) != null) {
+					divideNum++;
+					total += allRatios.get(a).get(i);
+				}
+			}
+			total /= divideNum;
+			averageRatios.add(total);
+		}
+		
+		for(int i = 0; i < averageRatios.size(); i++) {
+			System.out.println(averageRatios.get(i));
+		}
+		
+		d.repaint();
+		*/
 	}
 
 	public static void main(String[] args) {
 		new Main();
 	}
-
+	
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		if(polygon != null ) {
+		/*
+		if(polygon != null) {	
 			calculateNewPoints(angle);
 			divideShape();
 			divideShape2();
 			
+			//Very crude solution of switching the arraylists for certain angles
 			if(angle % (2 * Math.PI) > Math.PI / 2 && angle % (2 * Math.PI) < 3 * Math.PI / 2) {	
 				ArrayList<ArrayList<Double[]>> temp = (ArrayList<ArrayList<Double[]>>) dividedShape.clone();
 				dividedShape = (ArrayList<ArrayList<Double[]>>) dividedShape2.clone();
@@ -65,18 +99,89 @@ public class Main implements ActionListener {
 				System.out.println(angle);
 			}
 			
-			d.repaint();
-			
+			d.repaint();	
+					
 			angle += (Math.PI / 180);
-		}		
+		}
+		*/
 	}
 	
 	public void generateElements(){
+		ArrayList<Double> ratios = new ArrayList<Double>();
+		ArrayList<Double> adjustedRatios = new ArrayList<Double>();
 		centroid = findCentroid(polygon, calculateArea(polygon));
 		calculateCenter();
 		calculateNewPoints(angle);
 		divideShape();
 		divideShape2();
+		
+		for(double i = 0; i <= (2 * Math.PI + (Math.PI / 180)); i += (Math.PI / 180)) {
+			calculateNewPoints(i);
+			divideShape();
+			divideShape2();
+			
+			area1 = 0.0;
+			area2 = 0.0;
+			
+			for(int a = 0; a < dividedShape.size(); a++) {
+				area1 += Math.abs(calculateArea(dividedShape.get(a)));
+			}
+			for(int a = 0; a < dividedShape2.size(); a++) {
+				area2 += Math.abs(calculateArea(dividedShape2.get(a)));
+			}
+			
+			/*
+			if(i % 2 * Math.PI <= (3 * Math.PI / 2)) {
+				if(i % (2 * Math.PI) >= (Math.PI / 2)) {
+					double temp = area1;
+					area1 = area2;
+					area2 = temp;
+				}
+			}
+			*/
+			if(i <= (3 * Math.PI / 2)) {
+				if(i >= (Math.PI / 2)) {
+					double temp = area1;
+					area1 = area2;
+					area2 = temp;
+				}
+			}
+			
+			ratios.add(area1 / area2);
+			adjustedRatios.add(null);
+		}
+
+		
+		double largest = 0;
+		int largestIndex = 0;
+		int offset;
+		int index;
+		
+		for(int a = 0; a < ratios.size(); a++) {
+			if(ratios.get(a) > largest) {
+				largest = ratios.get(a);
+				largestIndex = a;
+			}
+		}
+		
+		offset = (ratios.size() / 2) - largestIndex;
+		
+		for(int i = 0; i < ratios.size(); i++) {
+			index = i + offset;
+			if(index < 0) {
+				index += ratios.size();
+			}
+			if(index > ratios.size() - 1) {
+				index -= ratios.size();
+			}
+			adjustedRatios.set(index, ratios.get(i));
+		}
+		
+		allRatios.add(adjustedRatios);
+		
+		for(int i = 0; i < ratios.size(); i++) {
+			System.out.println(ratios.get(i));
+		}
 	}
 
 	public void generateShape() {
@@ -135,7 +240,7 @@ public class Main implements ActionListener {
 			} while (intersects);
 			polygon.add(vert);
 		}
-
+		
 	}
 	
 	public void calculateCenter() {
@@ -212,7 +317,6 @@ public class Main implements ActionListener {
 		}
 	}
 	
-	//TODO Sort pointIndexes
 	public TwoList sortPoints(ArrayList<Double[]> one, ArrayList<Integer> two) {
 		
 		for (int i = 1; i < one.size(); ++i) {
@@ -251,7 +355,6 @@ public class Main implements ActionListener {
 		
 	}
 	
-	//TODO UNUSED POINTS NOT SORTED????
 	public void divideShape() {
 		ArrayList<Double[]> unusedPoints = new ArrayList<Double[]>();
 		ArrayList<Integer> unusedPointIndexes = new ArrayList<Integer>();
@@ -383,6 +486,15 @@ public class Main implements ActionListener {
 			}
 			
 			dividedShape.add(currentPolygon);
+			
+			/*
+			for(int i = 0; i < dividedShape.size(); i++) {
+				System.out.println("new");
+				for(int a = 0; a < dividedShape.get(i).size(); a++) {
+					System.out.println(dividedShape.get(i).get(a)[0] + ", " + dividedShape.get(i).get(a)[1]);
+				}
+			}
+			*/
 		}
 
 	}

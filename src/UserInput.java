@@ -31,7 +31,6 @@ public class UserInput implements KeyListener, MouseListener {
 		
 		m.generateElements();
 		m.d.repaint();
-		System.out.println();
 	}
 
 	@Override
