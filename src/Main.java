@@ -49,8 +49,8 @@ public class Main implements ActionListener {
 		frame.addKeyListener(ui);
 		frame.addMouseListener(ui);
 		timer.start();
-		/*
-		for(int i = 0; i < 100; i++) {
+		
+		for(int i = 0; i < 300; i++) {
 			do {
 				generateShape(); 
 			}while(retry);
@@ -76,7 +76,7 @@ public class Main implements ActionListener {
 		}
 		
 		d.repaint();
-		*/
+		
 	}
 
 	public static void main(String[] args) {
@@ -106,6 +106,7 @@ public class Main implements ActionListener {
 		*/
 	}
 	
+	//TODO Figure out deviations at 0 and 2pi degrees
 	public void generateElements(){
 		ArrayList<Double> ratios = new ArrayList<Double>();
 		ArrayList<Double> adjustedRatios = new ArrayList<Double>();
@@ -115,7 +116,8 @@ public class Main implements ActionListener {
 		divideShape();
 		divideShape2();
 		
-		for(double i = 0; i <= (2 * Math.PI + (Math.PI / 180)); i += (Math.PI / 180)) {
+		//We get weird deviations at the endpoints.
+		for(double i = Math.PI / 180; i <= (2 * Math.PI + (Math.PI / 180)); i += (Math.PI / 180)) {
 			calculateNewPoints(i);
 			divideShape();
 			divideShape2();
@@ -130,17 +132,8 @@ public class Main implements ActionListener {
 				area2 += Math.abs(calculateArea(dividedShape2.get(a)));
 			}
 			
-			/*
-			if(i % 2 * Math.PI <= (3 * Math.PI / 2)) {
+			if(i % (2 * Math.PI) <= (3 * Math.PI / 2)) {
 				if(i % (2 * Math.PI) >= (Math.PI / 2)) {
-					double temp = area1;
-					area1 = area2;
-					area2 = temp;
-				}
-			}
-			*/
-			if(i <= (3 * Math.PI / 2)) {
-				if(i >= (Math.PI / 2)) {
 					double temp = area1;
 					area1 = area2;
 					area2 = temp;
@@ -178,10 +171,15 @@ public class Main implements ActionListener {
 		}
 		
 		allRatios.add(adjustedRatios);
-		
+		/*
 		for(int i = 0; i < ratios.size(); i++) {
 			System.out.println(ratios.get(i));
 		}
+		System.out.println("adjusted: ");
+		for(int i = 0; i < adjustedRatios.size(); i++) {
+			System.out.println(adjustedRatios.get(i));
+		}
+		*/
 	}
 
 	public void generateShape() {
@@ -354,7 +352,7 @@ public class Main implements ActionListener {
 		return sortedLists;
 		
 	}
-	
+	//TODO Figure out why some points are repeated numerous times (although it has no effect on area)
 	public void divideShape() {
 		ArrayList<Double[]> unusedPoints = new ArrayList<Double[]>();
 		ArrayList<Integer> unusedPointIndexes = new ArrayList<Integer>();
